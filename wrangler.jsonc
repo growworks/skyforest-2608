@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // ★ 이 값은 Cloudflare 에 실제로 배포되는 Worker 이름과 **반드시 같아야** 한다.
+  //   OpenNext 가 이 이름으로 WORKER_SELF_REFERENCE 서비스 바인딩을 자동 생성하기 때문에,
+  //   다르면 배포 시 아래 에러가 난다.
+  //     Service binding 'WORKER_SELF_REFERENCE' references Worker '...' which was not found. [10143]
+  //   Workers Builds 로 배포한다면 대시보드의 Worker 이름과 맞출 것.
+  "name": "skyforest",
+
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  // public/ 정적 자산 (이미지 929장 133MB — Workers 한도 20,000파일 / 파일당 25MiB 이내)
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // ISR 증분 캐시용 R2 버킷 (없다면: wrangler r2 bucket create skyforestclean-opennext-cache)
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "skyforestclean-opennext-cache"
+    }
+  ],
+
+  // 런타임 환경변수. 시크릿이 생기면 `wrangler secret put` 사용.
+  "vars": {
+    "SITE_SLUG": "skyforest",
+    "API_BASE_URL": "https://api.growworks.co.kr",
+    "CONTACT_API_MOCK": "false",
+    "NEXT_PUBLIC_SITE_URL": "https://skyforestclean.com"
+  }
+}
