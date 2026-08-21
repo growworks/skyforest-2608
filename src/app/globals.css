@@ -396,3 +396,21 @@ a.logo-link{display:flex;align-items:center;}
    타 서비스의 .strip 처럼 1장씩 가로 전체로 키운다(카드 테두리·클릭 확대는 유지).
    미디어쿼리보다 뒤에 오므로 전 해상도에서 1열이 적용된다. */
 .explain-grid{grid-template-columns:1fr;gap:16px;max-width:none;}
+
+/* 박람회 상세 하단 앞/뒤 이동 (.expo-nav)
+   6건이라 첫/마지막에는 한쪽이 없다. space-between + .next 의 margin-left:auto 로
+   한쪽만 있을 때도 좌/우 자리를 지키게 한다(빈 박스를 만들지 않는다). */
+.expo-nav{display:flex;gap:14px;justify-content:space-between;align-items:stretch;margin-top:44px;}
+.expo-nav .item{display:flex;align-items:center;gap:14px;flex:0 1 calc(50% - 7px);min-width:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s,border-color .25s;}
+.expo-nav .item:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:rgba(0,195,255,.45);}
+.expo-nav .item.next{margin-left:auto;flex-direction:row-reverse;text-align:right;}
+.expo-nav .thumb{width:56px;height:56px;border-radius:10px;overflow:hidden;flex:none;background:var(--surface-2);}
+.expo-nav .thumb img{width:100%;height:100%;object-fit:cover;}
+.expo-nav .txt{min-width:0;}
+.expo-nav .dir{display:block;font-size:.75rem;font-weight:800;color:var(--accent-t);margin-bottom:4px;}
+.expo-nav .ttl{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.95rem;font-weight:700;color:var(--ink);line-height:1.4;}
+@media(max-width:640px){
+  .expo-nav{flex-direction:column;gap:10px;}
+  .expo-nav .item{flex:1 1 auto;}
+  .expo-nav .item.next{margin-left:0;flex-direction:row;text-align:left;}
+}

@@ -33,8 +33,16 @@ export default async function ExpoDetailPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const e = await getExpoItem(slug)
-  if (!e) notFound()
+
+  // 목록 한 번만 조회해서 현재 항목과 앞/뒤 항목을 함께 구한다.
+  // (galleries API 는 상세 엔드포인트가 없어 목록에서 찾는 구조와도 맞는다)
+  const list = await getExpoList()
+  const idx = list.findIndex((x) => x.slug === slug)
+  if (idx === -1) notFound()
+
+  const e = list[idx]
+  const prev = list[idx - 1]
+  const next = list[idx + 1]
 
   return (
     <PageShell id={e.id}>
@@ -84,6 +92,33 @@ export default async function ExpoDetailPage({
               </div>
             ))}
           </div>
+
+          {(prev || next) && (
+            <nav className="expo-nav reveal" aria-label="박람회 현장 둘러보기">
+              {prev && (
+                <Link className="item prev" href={`/expo/${prev.slug}`}>
+                  <span className="thumb">
+                    <img src={img(prev.cover)} alt="" loading="lazy" />
+                  </span>
+                  <span className="txt">
+                    <span className="dir">← 이전 현장</span>
+                    <span className="ttl">{prev.nm}</span>
+                  </span>
+                </Link>
+              )}
+              {next && (
+                <Link className="item next" href={`/expo/${next.slug}`}>
+                  <span className="thumb">
+                    <img src={img(next.cover)} alt="" loading="lazy" />
+                  </span>
+                  <span className="txt">
+                    <span className="dir">다음 현장 →</span>
+                    <span className="ttl">{next.nm}</span>
+                  </span>
+                </Link>
+              )}
+            </nav>
+          )}
 
           <div className="back-strip reveal">
             <Link className="cta ghost" href="/expo">
