@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SEO, routeOf } from '@/lib/content/seo'
-import { OG_IMAGE, SITE_URL } from '@/lib/constants'
+import { OG_IMAGE, SITE, SITE_URL } from '@/lib/constants'
 
 /**
  * 페이지별 메타데이터 빌더.
@@ -9,11 +9,22 @@ import { OG_IMAGE, SITE_URL } from '@/lib/constants'
  * NOTE: 테이블의 `t` 는 "… | 하늘숲홈케어" 까지 포함된 완성형이라
  *       layout 의 title.template 이 다시 붙지 않도록 `absolute` 로 넣는다.
  */
-export function pageMetadata(id: string, opts?: { image?: string }): Metadata {
-  const e = SEO[id]
+export function pageMetadata(
+  id: string,
+  opts?: {
+    image?: string
+    /**
+     * SEO 테이블에 항목이 없을 때(어드민에서 새로 추가된 박람회 등) 사용할 값.
+     * 테이블에 있으면 테이블이 우선한다.
+     */
+    fallback?: { path: string; title: string; description: string }
+  },
+): Metadata {
+  const fb = opts?.fallback
+  const e = SEO[id] ?? (fb ? { p: fb.path, t: `${fb.title} | ${SITE.brand}`, d: fb.description } : undefined)
   if (!e) return {}
 
-  const path = routeOf(id)
+  const path = SEO[id] ? routeOf(id) : e.p
   const url = `${SITE_URL}${path === '/' ? '/' : path}`
   const image = opts?.image ?? OG_IMAGE
 

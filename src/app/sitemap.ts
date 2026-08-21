@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/constants'
 import { SEO, routeOf } from '@/lib/content/seo'
+import { getExpoList } from '@/lib/content'
 
 export const revalidate = 3600
 
@@ -18,14 +19,21 @@ function weightOf(id: string): { priority: number; changeFrequency: 'weekly' | '
 }
 
 /**
- * sitemap 은 SEO 테이블에서 파생된다.
- * 라우트를 추가하면 src/lib/content/seo.ts 에 항목만 넣으면 metadata·sitemap 이 함께 갱신된다.
+ * 정적 페이지·서비스는 SEO 테이블에서, **박람회 상세는 포트폴리오 API 에서** 파생한다.
+ * (어드민에서 항목이 늘어도 사이트맵이 따라간다. SEO 테이블의 expo-* 항목은 메타 문구용으로만 남는다)
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date()
-  return Object.keys(SEO).map((id) => ({
-    url: `${SITE_URL}${routeOf(id)}`,
+
+  const staticEntries = Object.keys(SEO)
+    .filter((id) => !id.startsWith('expo-'))
+    .map((id) => ({ url: `${SITE_URL}${routeOf(id)}`, lastModified, ...weightOf(id) }))
+
+  const expoEntries = (await getExpoList()).map((e) => ({
+    url: `${SITE_URL}/expo/${e.slug}`,
     lastModified,
-    ...weightOf(id),
+    ...weightOf('expo-'),
   }))
+
+  return [...staticEntries, ...expoEntries]
 }

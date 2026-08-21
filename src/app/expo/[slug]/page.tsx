@@ -9,7 +9,9 @@ import { getExpoItem, getExpoList } from '@/lib/content'
 import { img } from '@/lib/content/images'
 
 export const revalidate = 600
-export const dynamicParams = false
+// 어드민에서 박람회를 새로 추가하면 재빌드 없이도 첫 요청 때 렌더된다.
+// (false 로 두면 빌드 시점 목록에 없는 slug 는 무조건 404)
+export const dynamicParams = true
 
 export async function generateStaticParams() {
   const list = await getExpoList()
@@ -24,7 +26,11 @@ export async function generateMetadata({
   const { slug } = await params
   const e = await getExpoItem(slug)
   if (!e) return {}
-  return pageMetadata(e.id, { image: img(e.cover) })
+  // SEO 테이블에 없는 신규 항목은 API 값으로 title·description 을 만든다
+  return pageMetadata(e.id, {
+    image: img(e.cover),
+    fallback: { path: `/expo/${e.slug}`, title: e.nm, description: e.desc },
+  })
 }
 
 export default async function ExpoDetailPage({

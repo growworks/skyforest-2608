@@ -141,8 +141,10 @@ export type HomeStep = [string, string, string]
 
 /** 박람회 현장 (일자는 근거 부족으로 표기하지 않는다) */
 export interface ExpoItem {
-  /** 데모 원본 id — SEO 테이블 키와 동일 */
+  /** SEO 테이블 키 · DOM id (`expo-<slug>`) */
   id: string
+  /** 포트폴리오 API 의 정수 PK (정적 폴백 데이터에는 없음) */
+  apiId?: number
   /** 라우팅 세그먼트 */
   slug: string
   /** 박람회명 */

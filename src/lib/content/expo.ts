@@ -30,3 +30,17 @@ export const EXPO: ExpoItem[] = [
 export function findExpo(slug: string): ExpoItem | undefined {
   return EXPO.find((e) => e.slug === slug)
 }
+
+/**
+ * 제목 → slug 표.
+ * 포트폴리오 API 에는 slug 를 담을 필드가 없어서(`link` 는 전 건 null),
+ * 어드민에 "URL 주소"(custom.field_4)가 추가되기 전까지 **이미 색인된 6건의 URL** 을
+ * 지키기 위한 매칭표다. field_4 가 채워지면 그쪽이 우선한다.
+ */
+const SLUG_BY_TITLE: Record<string, string> = Object.fromEntries(
+  EXPO.map((e) => [e.nm, e.slug]),
+)
+
+export function slugForTitle(title: string): string | undefined {
+  return SLUG_BY_TITLE[title.trim()]
+}

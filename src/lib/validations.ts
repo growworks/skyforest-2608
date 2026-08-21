@@ -33,7 +33,12 @@ export type ContactInput = z.infer<typeof contactSchema>
 
 /**
  * 화면 입력 → 상담 API 페이로드.
- * 희망일자·주소는 별도 필드가 없어 message 상단에 라벨을 붙여 올린다.
+ *
+ * 희망일자·주소는 별도 필드가 없어 message 에 라벨 줄로 붙인다.
+ * **문의내용을 맨 앞에 두고 라벨 줄을 그 아래로** 놓는다 — 접수 알림이
+ * `문의 내용:` 라벨 뒤에 message 를 그대로 붙이기 때문에, 라벨 줄이 앞에 오면
+ * "문의 내용:" 바로 밑에 "희망일자: ..." 가 와서 어긋난다.
+ * 값이 없는 줄은 넣지 않는다(빈 라벨이 알림에 그대로 나간다).
  */
 export function toContactPayload(d: ContactInput) {
   const meta: string[] = []
@@ -45,6 +50,6 @@ export function toContactPayload(d: ContactInput) {
     phone: d.phone.slice(0, CONTACT_LIMITS.phone),
     serviceType: d.services.join(', ').slice(0, CONTACT_LIMITS.serviceType),
     budget: d.area.slice(0, CONTACT_LIMITS.budget),
-    message: [meta.join('\n'), d.message].filter(Boolean).join('\n\n'),
+    message: [d.message, meta.join('\n')].filter(Boolean).join('\n\n'),
   }
 }

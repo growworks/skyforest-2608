@@ -100,7 +100,8 @@ node scripts/optimize-images.mjs ../skyforest-demo/images public/images-new
 | `/[service]` | `cleaning` `grout` `nano` `elastic` | 부모 4p |
 | `/[service]/[child]` | `cleaning-new` 등 | 하위 18p (청소3 · 줄눈8 · 나노4 · 탄성3) |
 
-모든 동적 라우트는 `generateStaticParams` + `dynamicParams = false` → 알 수 없는 경로는 404.
+서비스 라우트는 `generateStaticParams` + `dynamicParams = false` → 알 수 없는 경로는 404.
+박람회 상세만 `dynamicParams = true` 다 (어드민에서 추가하면 재빌드 없이 렌더. 없는 slug 는 그대로 404).
 
 ### 박람회 현장
 
@@ -117,7 +118,9 @@ node scripts/optimize-images.mjs ../skyforest-demo/images public/images-new
 여기에 항목을 추가하면 `metadata` 와 `sitemap.xml` 이 함께 갱신된다.
 
 - 페이지 메타: `pageMetadata(id)` → title(absolute) · description · canonical · OG · Twitter
-- 사이트맵: `src/app/sitemap.ts` 가 SEO 테이블에서 32 URL 파생 (우선순위 홈 1.0 → 서비스 0.9/0.8 → 박람회 0.6)
+- 사이트맵: `src/app/sitemap.ts` — 정적·서비스는 SEO 테이블, **박람회 상세는 포트폴리오 API** 에서 파생
+  (우선순위 홈 1.0 → 서비스 0.9/0.8 → 박람회 0.6). 현재 32 URL
+- SEO 테이블에 없는 항목(어드민 신규 박람회)은 `pageMetadata` 의 `fallback` 으로 API 값에서 메타 생성
 - `robots.txt`: 전체 허용 + `/api/` 차단 + 사이트맵 위치
 - 네이버 소유확인: `naver-site-verification` 메타 (`lib/constants.ts` 의 `NAVER_SITE_VERIFICATION`)
 - JSON-LD: 공통 `HomeAndConstructionBusiness`(+`hasOfferCatalog` 5종) · `WebSite`, 페이지별 `Service` · `BreadcrumbList`
@@ -141,8 +144,8 @@ node scripts/optimize-images.mjs ../skyforest-demo/images public/images-new
 | 연락처 | `phone` | 필수, 숫자 9~11자리 검증, 50자 절단 |
 | 관심 서비스 (입주청소·줄눈시공·나노코팅·새집증후군·탄성코트) | `serviceType` | `, ` join, 255자 절단 |
 | 평수 | `budget` | 명세상 재활용 허용 필드, 100자 절단 |
-| 희망일자 · 주소 | `message` 상단 | `희망일자: ` / `시공 주소: ` 라벨 + 빈 줄 후 문의내용 |
-| 문의내용 | `message` 하단 | |
+| 문의내용 | `message` 상단 | 아래 "message 조립 순서" 참고 |
+| 희망일자 · 주소 | `message` 하단 | `희망일자: ` / `시공 주소: ` 라벨 줄. 값 없으면 줄 자체를 뺀다 |
 | 개인정보 동의 | (전송 안 함) | 화면 전용 필수 체크 |
 
 ### 명세 주의사항 (구현에 반영됨)
@@ -152,6 +155,20 @@ node scripts/optimize-images.mjs ../skyforest-demo/images public/images-new
 - 길이 초과 시 500 이 될 수 있어 **전송 전 절단** (`toContactPayload`)
 - 성공 판정은 `201` + `{success:true}`, 실패 분기는 `error` **코드** (`VALIDATION` 등, message 는 바뀔 수 있음)
 - `attachments` 미사용 — 첨부 도입 시 `/upload` 선호출 후 `[{url,name}]` **객체 배열**로 전송 (문자열 배열은 어드민 링크 깨짐)
+
+### `message` 조립 순서 (2026-08-20 수정)
+
+접수 알림이 `문의 내용:` 라벨 뒤에 `message` 를 그대로 붙인다. 라벨 줄이 앞에 오면
+"문의 내용:" 바로 밑에 "희망일자: ..." 가 와서 어긋나므로 **문의내용을 맨 앞**에 둔다.
+
+```
+베란다 곰팡이가 심해서 상담 받고 싶습니다.
+
+희망일자: 2026-09-01
+시공 주소: 경기 광주시 목현동
+```
+
+값이 없는 줄은 넣지 않는다(빈 라벨이 알림에 그대로 나간다).
 
 ### 전송 테스트 결과 (2026-08-07)
 
@@ -184,8 +201,11 @@ src/
     ui/      ReviewMarquee CaseGallery ZoomChip
     seo/     JsonLd
   lib/
-    content/                 ★ 콘텐츠 (mock → API 교체 지점)
-      index.ts               파사드: getServices/getExpoList/getHomeReviews …
+    api/                     ★ GrowWorks 공개 API
+      client.ts              apiFetch (error 코드 기반 ApiError)
+      portfolios.ts          박람회 현장 조회·매핑 (+ 정적 폴백)
+    content/                 ★ 콘텐츠 파사드
+      index.ts               getServices/getExpoList/getHomeReviews …
       seo.ts                 ★ 페이지별 SEO 단일 소스
       images.ts services.ts case-pools.ts strips.ts
       reviews-manifest.ts reviews.ts gallery.ts expo.ts process.ts
@@ -218,21 +238,45 @@ public/images/{real,reviews,placeholder}  ·  public/og-image.jpg  ·  public/fa
 
 ---
 
-## 7. 콘텐츠 교체 (박람회 등 API 연동 대기)
+## 7. 콘텐츠 (박람회 = API 연동 완료 / 나머지 = 로컬)
 
-**`src/lib/content/index.ts` 의 함수 본문만 바꾸면 된다.** 페이지/컴포넌트는 건드리지 않는다.
-
-```ts
-// 현재
-export async function getExpoList(): Promise<ExpoItem[]> { return EXPO }
-
-// API 확정 후
-export async function getExpoList(): Promise<ExpoItem[]> {
-  return apiFetch<ExpoItem[]>('/expos', { next: { revalidate: 600, tags: ['expo'] } })
-}
-```
-
+`src/lib/content/index.ts` 파사드가 유일한 데이터 출입구다. 페이지/컴포넌트는 데이터 형태에만 의존한다.
 캐시 주기는 각 페이지의 `export const revalidate` (홈·서비스·박람회 600초, 회사소개·사이트맵 3600초).
+
+### 박람회 현장 → 포트폴리오 API
+
+`GET /skyforest/portfolios?category=박람회현장&limit=100` (명세: `growworks-web-admin/docs/api/openapi-skyforest.yaml`)
+
+| API | → `ExpoItem` |
+|---|---|
+| `title` | `nm` |
+| `custom.field_1` | `desc` (라벨은 "서브타이틀"이지만 실제로는 설명 문단) |
+| `custom.field_2` | `loc` |
+| `custom.field_3` | `svc` |
+| `thumbnailUrl` | `cover` |
+| `[thumbnailUrl, ...images]` | `photos` — **`thumbnailUrl` 은 `images` 에 없다** |
+
+- **상세 엔드포인트를 쓰지 않는다.** 목록에 `custom`·`images` 가 모두 실려 있고,
+  `/portfolios/{id}` 는 정수 id 만 받아 문자 slug 를 넘기면 404 가 아니라 **500** 이 난다.
+- **카테고리 이름(`박람회현장`)을 바꾸면 목록이 빈다.** 오류가 아니라 빈 배열이라 조용히 사라진다.
+- API 장애 시 이식 당시의 정적 데이터(`content/expo.ts`)로 폴백하고 서버 로그에 남긴다.
+  하드 실패를 원하면 `src/lib/api/portfolios.ts` 의 `catch` 를 제거한다.
+
+#### slug 결정 순서
+
+포트폴리오에는 slug 를 담을 표준 필드가 없다(`link` 는 전 건 null). 그래서 3단계로 정한다.
+
+1. `custom.field_4` — 어드민 카테고리 17 에 "URL 주소" 필드를 추가하면 여기가 진실 소스가 된다 **(권장)**
+2. 제목 → 기존 slug 표 (`content/expo.ts` 의 `slugForTitle`) — **이미 색인된 6건 URL 을 지키기 위함**
+3. 정수 id — 신규 항목인데 1·2 가 모두 없을 때의 최후 수단 (`/expo/158`)
+
+현재는 2번으로 동작한다. `field_4` 가 채워지면 코드 수정 없이 1번으로 승격된다.
+
+#### 신규 항목 대응
+
+- `dynamicParams = true` → 어드민에서 추가하면 재빌드 없이 첫 요청 때 렌더된다.
+- `sitemap.xml` 의 박람회 URL 도 API 목록에서 파생한다.
+- SEO 테이블에 없는 항목은 `pageMetadata` 의 `fallback` 으로 API 값(제목·설명)에서 메타를 만든다.
 
 ---
 

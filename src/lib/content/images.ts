@@ -8,8 +8,14 @@
 const P = '/images/placeholder/'
 const R = '/images/real/'
 
-/** .jpg/.png → .webp (이미 .webp 면 그대로) */
-export const toWebp = (p: string): string => p.replace(/\.(jpe?g|png)$/i, '.webp')
+/**
+ * 로컬 자산 경로의 .jpg/.png → .webp (이미 .webp 면 그대로).
+ *
+ * **`/images/` 로 시작하는 경로에만 적용한다.** API 가 주는 원격 URL(S3 등)까지 바꾸면
+ * 존재하지 않는 파일을 가리키게 된다.
+ */
+export const toWebp = (p: string): string =>
+  p.startsWith('/images/') ? p.replace(/\.(jpe?g|png)$/i, '.webp') : p
 
 /** 원본 홈페이지 카피본 실사진 (thumbnail_ 프리픽스) */
 export const rf = (f: string): string => toWebp(R + 'thumbnail_' + f)
