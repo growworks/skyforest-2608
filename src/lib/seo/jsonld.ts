@@ -12,7 +12,7 @@ export const ORGANIZATION_LD = {
   logo: `${SITE_URL}${IMG['logo-brand']}`,
   image: `${SITE_URL}${OG_IMAGE}`,
   description:
-    '줄눈시공·입주청소·나노코팅·새집증후군·탄성코트 전문. 100% 지부장 직영 책임시공.',
+    '줄눈시공·입주청소·나노코팅·새집증후군·탄성코트 전문. 100% 지부장 체계 책임시공.',
   telephone: `+82-${SITE.tel}`,
   email: SITE.email,
   foundingDate: SITE.founded,

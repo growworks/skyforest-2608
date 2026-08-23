@@ -32,7 +32,7 @@ export function Hero() {
       ))}
       <div className="veil"></div>
       <div className="container hero-inner">
-        <p className="kicker">100% 지부장 직영 · 하청 없는 책임시공</p>
+        <p className="kicker">100% 지부장 체계 · 하청 없는 책임시공</p>
         <h1>
           진심을 다하는
           <br />
