@@ -31,9 +31,9 @@ const RAW_IMG: Record<string, string> = {
   'card-nano':rf('20240529_3e39b81c54e85.jpg'),
   'card-elastic':rf('20251021_466abc3f783ce.jpg'),
   'about-hero':rf('20240513_46c64a9336182.jpg'),
-  'about-team':rf('20251125_fcf02f2c270f6.jpg'),
+  'about-team':rf('20260823_about-team.jpg'), /* 2026-08-23 고객 교체본 (원본 카피본 아님) */
   'about-ceo':rf('20260514_696ca0da02608.jpg'),
-  'org':rf('20260629_f4686fcf5485b.jpg'),
+  'org':rf('20260823_org.jpg'), /* 2026-08-23 고객 교체본 (원본 카피본 아님) */
   'award':rf('20260317_911f025dd6005.jpg'),
   'expo-hero':rf('20241010_5cece0289c98b.jpg'),
   'expo-intro':rf('20241010_d363a7da00e54.png'),
