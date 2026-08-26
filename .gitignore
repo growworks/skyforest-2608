@@ -33,3 +33,6 @@ yarn-error.log*
 /.open-next/
 /.wrangler/
 cloudflare-env.d.ts
+
+# 미사용 처리한 자산 (개인정보 포함 - 저장소 반입 금지)
+_unused/
